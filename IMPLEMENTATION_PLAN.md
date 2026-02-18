@@ -346,27 +346,85 @@ This replaces R's `survival::survreg(Surv(ConcLow, ConcHigh, type="interval2") ~
 Parameters to optimize: `theta = [B0, B1, B2, B3, B4, log_sigma]` (6 parameters).
 
 ```python
-def neg_log_likelihood(theta, X, y_uncen, y_cen_high, uncen_mask, weights):
-    """Negative log-likelihood for weighted censored Gaussian regression.
+def neg_log_likelihood_with_grad(theta, X, y_uncen, y_cen_high, uncen_mask, weights):
+    """Negative log-likelihood AND analytical gradient for weighted censored Gaussian regression.
+
+    Returning both cost and gradient in a single function avoids numerical
+    differentiation. With 6 parameters, this eliminates ~6 extra function
+    evaluations per optimizer iteration — a 5-10x speedup across the ~7500
+    MLE solves in surface estimation + cross-validation.
 
     Parameters:
-        theta: [B0, B1, B2, B3, B4, log_sigma]
+        theta: [B0, B1, B2, B3, B4, log_sigma] (6 parameters)
         X: design matrix (n, 5) — [1, DecYear, LogQ, SinDY, CosDY]
         y_uncen: log(ConcAve) for uncensored obs (NaN for censored)
         y_cen_high: log(ConcHigh) for all obs
-        uncen_mask: boolean, True if uncensored
+        uncen_mask: boolean array, True if uncensored
         weights: tricube weights (n,)
+
+    Returns:
+        cost: scalar, negative log-likelihood
+        grad: (6,) array, gradient of NLL w.r.t. theta
 
     Log-likelihood terms:
         Uncensored obs i:
-            w_i * [log(phi((y_i - X_i @ beta) / sigma)) - log(sigma)]
-          = w_i * [-0.5*((y_i - X_i@beta)/sigma)² - 0.5*log(2*pi) - log(sigma)]
+            w_i * [-0.5*((y_i - X_i@beta)/sigma)² - 0.5*log(2*pi) - log(sigma)]
 
         Left-censored obs i:
             w_i * log(Phi((log(ConcHigh_i) - X_i @ beta) / sigma))
 
         where phi = normal PDF, Phi = normal CDF
+
+    Gradient derivation (NLL = negative log-likelihood):
+
+        Let z_i = (y_i - X_i @ beta) / sigma for uncensored,
+            z_i = (y_high_i - X_i @ beta) / sigma for censored.
+        Let lambda(z) = phi(z) / Phi(z)  (inverse Mills ratio).
+
+        Uncensored:
+            dNLL/d(beta) = -sum_uncen w_i * (y_i - X_i@beta) / sigma² * X_i
+            dNLL/d(ln_sigma) = sum_uncen w_i * (1 - z_i²)
+
+        Censored:
+            dNLL/d(beta) = sum_cen w_i * lambda(z_i) * X_i / sigma
+            dNLL/d(ln_sigma) = sum_cen w_i * lambda(z_i) * z_i
     """
+    beta = theta[:-1]
+    log_sigma = theta[-1]
+    sigma = np.exp(log_sigma)
+
+    # --- Cost (NLL) ---
+    # Uncensored
+    resid_uncen = y_uncen[uncen_mask] - X[uncen_mask] @ beta
+    z_uncen = resid_uncen / sigma
+    nll_uncen = 0.5 * z_uncen**2 + log_sigma + 0.5 * np.log(2 * np.pi)
+
+    # Censored
+    z_cen = (y_cen_high[~uncen_mask] - X[~uncen_mask] @ beta) / sigma
+    log_cdf_cen = stats.norm.logcdf(z_cen)
+    nll_cen = -log_cdf_cen
+
+    cost = np.sum(weights[uncen_mask] * nll_uncen) + np.sum(weights[~uncen_mask] * nll_cen)
+
+    # --- Gradient of NLL ---
+    grad = np.zeros_like(theta)
+
+    # Inverse Mills ratio for censored obs: lambda(z) = phi(z)/Phi(z)
+    # Computed in log-space for numerical stability
+    log_pdf_cen = stats.norm.logpdf(z_cen)
+    mills = np.exp(log_pdf_cen - log_cdf_cen)
+
+    # dNLL/d(beta)
+    grad_beta_uncen = -weights[uncen_mask, None] * (resid_uncen[:, None] / sigma**2) * X[uncen_mask]
+    grad_beta_cen = weights[~uncen_mask, None] * mills[:, None] * (X[~uncen_mask] / sigma)
+    grad[:-1] = np.sum(grad_beta_uncen, axis=0) + np.sum(grad_beta_cen, axis=0)
+
+    # dNLL/d(ln_sigma)
+    grad_sigma_uncen = weights[uncen_mask] * (1 - z_uncen**2)
+    grad_sigma_cen = weights[~uncen_mask] * mills * z_cen
+    grad[-1] = np.sum(grad_sigma_uncen) + np.sum(grad_sigma_cen)
+
+    return cost, grad
 
 
 def run_surv_reg(
@@ -379,7 +437,8 @@ def run_surv_reg(
     2. Get starting values: weighted OLS on uncensored observations
        (fallback: unweighted OLS if insufficient weighted uncensored data)
        Initial log_sigma = log(std(residuals))
-    3. Minimize neg_log_likelihood using scipy.optimize.minimize(method='L-BFGS-B')
+    3. Minimize using scipy.optimize.minimize(method='L-BFGS-B', jac=True)
+       (jac=True tells scipy the function returns (cost, gradient) tuple)
     4. If convergence fails, apply jitter and retry (see jitter_sample below)
 
     Returns:
@@ -411,7 +470,8 @@ def jitter_sample(conc_low, conc_high, scale=0.01):
 
 - `tricube`: Verify w(0, h)=1, w(h, h)=0, w(h*0.5, h) matches formula, negative d works
 - `compute_weights`: Verify product of three dimensions, edge adjustment behavior, window expansion
-- `neg_log_likelihood`: Compare against hand-computed values for a tiny dataset
+- `neg_log_likelihood_with_grad`: Compare cost against hand-computed values for a tiny dataset
+- `neg_log_likelihood_with_grad`: Verify analytical gradient matches scipy.optimize.approx_fprime (numerical gradient) within rtol=1e-5
 - `run_surv_reg`: Compare coefficients against R `survreg` output for a known weighted dataset
 - `predict`: Verify bias correction formula
 
