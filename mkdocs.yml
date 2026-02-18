@@ -1,0 +1,58 @@
+site_name: wrtds-py
+site_description: A transcription of the usgs r package wrtds to python
+
+repo_url: https://github.com/mullenkamp/wrtds-py
+repo_name: mullenkamp/wrtds-py
+
+theme:
+    name: material
+    icon:
+        logo: material/library
+    palette:
+        # Palette toggle for light mode
+        - media: "(prefers-color-scheme: light)"
+          scheme: default
+          primary: grey
+          accent: amber
+          toggle:
+            icon: material/brightness-7
+            name: Switch to dark mode
+
+        # Palette toggle for dark mode
+        - media: "(prefers-color-scheme: dark)"
+          scheme: slate
+          primary: grey
+          accent: amber
+          toggle:
+            icon: material/brightness-4
+            name: Switch to light mode
+
+markdown_extensions:
+    - toc:
+        permalink: true
+    - pymdownx.highlight:
+        anchor_linenums: true
+    - pymdownx.tasklist:
+        custom_checkbox: true
+    - pymdownx.inlinehilite
+    - pymdownx.snippets
+    - pymdownx.superfences
+
+plugins:
+    - search
+    - mkdocstrings:
+        handlers:
+            python:
+                import:
+                    - https://docs.python.org/3.11/objects.inv
+                options:
+                    docstring_style: google
+
+watch:
+    - docs
+    - wrtds
+
+nav:
+    - About: index.md
+    - Reference:
+        - wrtds: reference/wrtds.md

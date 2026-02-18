@@ -1,0 +1,46 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Python testing
+
+on:
+  push:
+    branches: [ dev ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      # prevent cancelling other jobs if one version fails
+      fail-fast: false 
+      matrix:
+        # Define the versions you want to test here
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      # 1. Install the specific Python version for this matrix job
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      # 2. Sync dependencies
+      # uv will automatically detect the Python version installed above
+      - name: Install dependencies
+        run: uv sync
+
+      # 3. Run tests
+      - name: Run tests
+        run: uv run pytest
+
+
+
