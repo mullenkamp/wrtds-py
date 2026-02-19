@@ -8,7 +8,7 @@ A Python implementation of **WRTDS** (Weighted Regressions on Time, Discharge, a
 
 ---
 
-**Documentation**: [https://mullenkamp.github.io/wrtds-py/](https://mullenkamp.github.io/wrtds/)
+**Documentation**: [https://mullenkamp.github.io/wrtds-py/](https://mullenkamp.github.io/wrtds-py/)
 
 **Source Code**: [https://github.com/mullenkamp/wrtds-py](https://github.com/mullenkamp/wrtds-py)
 
