@@ -1,5 +1,5 @@
 site_name: wrtds-py
-site_description: A transcription of the usgs r package wrtds to python
+site_description: A Python implementation of USGS WRTDS (Weighted Regressions on Time, Discharge, and Season)
 
 repo_url: https://github.com/mullenkamp/wrtds-py
 repo_name: mullenkamp/wrtds-py
@@ -7,29 +7,36 @@ repo_name: mullenkamp/wrtds-py
 theme:
     name: material
     icon:
-        logo: material/library
+        logo: material/water
     palette:
-        # Palette toggle for light mode
         - media: "(prefers-color-scheme: light)"
           scheme: default
-          primary: grey
+          primary: blue grey
           accent: amber
           toggle:
             icon: material/brightness-7
             name: Switch to dark mode
-
-        # Palette toggle for dark mode
         - media: "(prefers-color-scheme: dark)"
           scheme: slate
-          primary: grey
+          primary: blue grey
           accent: amber
           toggle:
             icon: material/brightness-4
             name: Switch to light mode
+    features:
+        - navigation.sections
+        - navigation.expand
+        - navigation.top
+        - content.code.copy
+        - search.suggest
+        - search.highlight
+        - toc.follow
 
 markdown_extensions:
     - toc:
         permalink: true
+    - admonition
+    - pymdownx.details
     - pymdownx.highlight:
         anchor_linenums: true
     - pymdownx.tasklist:
@@ -37,22 +44,65 @@ markdown_extensions:
     - pymdownx.inlinehilite
     - pymdownx.snippets
     - pymdownx.superfences
+    - pymdownx.tabbed:
+        alternate_style: true
+    - pymdownx.arithmatex:
+        generic: true
+    - attr_list
+    - tables
 
 plugins:
     - search
     - mkdocstrings:
         handlers:
             python:
-                import:
+                inventories:
                     - https://docs.python.org/3.11/objects.inv
+                    - https://pandas.pydata.org/docs/objects.inv
+                    - https://numpy.org/doc/stable/objects.inv
+                    - https://docs.scipy.org/doc/scipy/objects.inv
                 options:
                     docstring_style: google
+                    show_root_heading: true
+                    show_source: true
+                    members_order: source
+
+extra_javascript:
+    - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
 
 watch:
     - docs
     - wrtds
 
 nav:
-    - About: index.md
-    - Reference:
-        - wrtds: reference/wrtds.md
+    - Home: index.md
+    - Getting Started:
+        - Installation: getting-started/installation.md
+        - Quickstart: getting-started/quickstart.md
+        - Input Data Format: getting-started/input-data.md
+    - User Guide:
+        - Overview: guide/overview.md
+        - Fitting a Model: guide/fitting.md
+        - WRTDS-K (Kalman): guide/kalman.md
+        - Trend Analysis: guide/trends.md
+        - Bootstrap Confidence Intervals: guide/bootstrap.md
+        - Summary Tables: guide/summaries.md
+        - Plotting: guide/plotting.md
+    - Notes:
+        - R vs Python Differences: notes/r-vs-python.md
+        - Changelog: notes/changelog.md
+    - API Reference:
+        - WRTDS Class: reference/core.md
+        - Data Preparation: reference/data_prep.md
+        - Regression: reference/regression.md
+        - Surfaces: reference/surfaces.md
+        - Flow Normalization: reference/flow_norm.md
+        - Cross-Validation: reference/cross_val.md
+        - Kalman: reference/kalman.md
+        - Trends: reference/trends.md
+        - Summaries: reference/summaries.md
+        - Bootstrap: reference/bootstrap.md
+        - Plots:
+            - Overview Plots: reference/plots/data_overview.md
+            - Result Plots: reference/plots/results.md
+            - Diagnostic Plots: reference/plots/diagnostics.md

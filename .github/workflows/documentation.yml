@@ -5,42 +5,37 @@ on:
     branches:
       - main
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Allow one concurrent deployment
 concurrency:
   group: "pages"
   cancel-in-progress: true
 
-# Default to bash
 defaults:
   run:
     shell: bash
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install hatch
-        hatch env create
+      run: uv sync --group docs
     - name: Build
-      run: hatch run docs-build
+      run: uv run mkdocs build
     - name: Upload artifact
-      uses: actions/upload-pages-artifact@v1
+      uses: actions/upload-pages-artifact@v3
       with:
         path: ./site
 
@@ -53,4 +48,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v1
+        uses: actions/deploy-pages@v4

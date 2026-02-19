@@ -1,0 +1,12 @@
+{
+  "n_logq": 14,
+  "n_year": 529,
+  "n_layer": 3,
+  "bottom_logq": -4.6641,
+  "top_logq": 5.5568,
+  "step_logq": 0.7862,
+  "bottom_year": 1979,
+  "top_year": 2012,
+  "step_year": 0.0625,
+  "shape": [14, 529, 3]
+}

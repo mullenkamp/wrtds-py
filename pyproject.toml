@@ -26,6 +26,11 @@ dev = [
   "pytest",
   "pytest-cov",
 ]
+docs = [
+  "mkdocs-material>=9.5,<9.7",
+  "mkdocstrings[python]>=0.24,<1.0",
+  "mkdocstrings-python>=1.10,<2.0",
+]
 
 
 
@@ -152,6 +157,9 @@ ban-relative-imports = "all"
 [tool.ruff.per-file-ignores]
 # Tests can use magic values, assertions, and relative imports
 "tests/**/*" = ["PLR2004", "S101", "TID252"]
+
+[tool.pytest.ini_options]
+testpaths = ["wrtds/tests"]
 
 [tool.coverage.run]
 source_pkgs = ["wrtds", "tests"]
