@@ -47,14 +47,10 @@ pip install wrtds
 
 ## Documentation
 
-<div class="grid cards" markdown>
-
 - [**Getting Started**](getting-started/installation.md) — installation, quickstart tutorial, input data format
 - [**User Guide**](guide/overview.md) — model fitting, WRTDS-K, trends, bootstrap, plotting
 - [**API Reference**](reference/core.md) — full module-level documentation
 - [**R vs Python Differences**](notes/r-vs-python.md) — known numerical differences from EGRET
-
-</div>
 
 ## License
 
